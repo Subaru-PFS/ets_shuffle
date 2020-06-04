@@ -27,7 +27,6 @@ import sys
 import textwrap as tw
 import warnings
 import datetime
-from pyhetdex.coordinates.tangent_projection import TangentPlane as TP
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astropy.time import Time
@@ -36,26 +35,8 @@ import numpy
 import configparser
 
 from . import shuffle
-from . import parang
 from . import findStars
 from . import __full_version__
-
-
-# replace the standard print with a version that warns to use logging instead
-print_ = print
-
-
-def _print(*args, **kwargs):
-    # caller = inspect.getframeinfo(inspect.stack()[1][0])
-
-    # with warnings.catch_warnings():
-    #    warnings.simplefilter('always')
-    #     warnings.warn('\n\t{t.filename}:{t.lineno}: please replace the print'
-    #                   ' with a log of the appropriate type'.format(t=caller))
-    print_(*args, **kwargs)
-
-
-setattr(builtins, 'print', _print)
 
 
 class IFUException(ValueError):
@@ -193,34 +174,18 @@ def parse_args(argv=None):
     parser.add_argument('--version', '-V', action='version',
                         version=__full_version__)
 
-    parser.add_argument("ra", action=RaToFloat, help='''ra of the target in
+    parser.add_argument("ra", action=RaToFloat, help='''ra of the FP center in
                         hours.''')
 
     parser.add_argument("dec", action=DecToFloat,
-                        help='dec of the target in degrees')
+                        help='dec of the FP center in degrees')
+
+    parser.add_argument("pa", type=float,
+                        help='PA of the telescope in degrees')
 
     parser.add_argument("radius", type=float,
                         help='''Search radius (in degrees) for proper guide
-                        stars and wfs stars.''')
-
-    parser.add_argument("track", type=int, choices=[0, 1],
-                        help='Type of track: 0: East 1: West')
-
-    parser.add_argument("ifuslot", type=int,
-                        help='''ifuslot of the target. For example: 075.
-                        Note: the boresight is 000.''')
-
-    parser.add_argument("x_offset", nargs='?', type=float,
-                        help='''Small X offset from center of ifuslot in
-                        arcsecs''', default=0.0)
-
-    parser.add_argument("y_offset", nargs='?', type=float,
-                        help='''Small Y offset from center of ifuslot in
-                        arcsecs''', default=0.0)
-
-    parser.add_argument("target", nargs='?', type=str,
-                        help='''Name of the target observation''',
-                        default='Test')
+                        stars.''')
 
     parser.add_argument("--epoch", type=float,
                         help='''Epoch of target coordinates''',
@@ -243,21 +208,7 @@ def parse_args(argv=None):
                         into a configuration object""",
                         default="./shuffle.cfg", type=load_config)
 
-    parser.add_argument("--limited_probe_annulus",
-                        help='''Use 0.31 deg for inner probe radius''',
-                        action="count", default=0)
-
     # ARGUMENTS IN CONFIG FILE
-
-    for i in ['1', '2']:
-        parser.add_argument("--force-gp" + i, metavar='id' + i, help="""Force
-                            the guide probe {} to use the star with the given
-                            id""".format(i))
-
-    for i in ['1', '2']:
-        parser.add_argument("--force-wfs" + i, metavar='id' + i, help="""Force
-                            the wavefront sensor probe {} to use the star with
-                            the given id""".format(i))
 
     parser.add_argument("--localcat", type=str, help="""Use a local catalog
                         for star searches""", default=None)
@@ -272,35 +223,10 @@ def parse_args(argv=None):
                         help="""Use the brightness
                         of the probe stars as a selection criteria.  If False,
                         then the distance from the target angle is
-                        minimizes.""", default=None)
+                        minimized.""", default=None)
 
     parser.add_argument("--fplane_file", type=str, help="""Fplane file to be
                         used.""", default=None)
-
-    parser.add_argument("--az", nargs='?', type=float,
-                        help='''Manual Non-optimal AZ input''', default=None)
-
-    for i in ['1', '2']:
-        parser.add_argument("--dpatrol_g" + i + 'min',
-                            help="""Guide probe minimum patrol angle""",
-                            type=float, default=None)
-        parser.add_argument("--dpatrol_g" + i + 'max',
-                            help="""Guide probe maximum patrol angle""",
-                            type=float, default=None)
-        parser.add_argument("--dpatrol_g" + i + 'targ',
-                            help="""Guide probe target patrol angle""",
-                            type=float, default=None)
-
-    for i in ['1', '2']:
-        parser.add_argument("--dpatrol_w" + i + 'min',
-                            help="""Wavefront probe minimum patrol angle""",
-                            type=float, default=None)
-        parser.add_argument("--dpatrol_w" + i + 'max',
-                            help="""Wavefront probe maximum patrol angle""",
-                            type=float, default=None)
-        parser.add_argument("--dpatrol_w" + i + 'targ',
-                            help="""Wavefront probe target patrol angle""",
-                            type=float, default=None)
 
     parser.add_argument("--catalog", type=str, help="""Star catalog to use,
                         for example: GAIA""", default=None)
@@ -352,11 +278,6 @@ def parse_args(argv=None):
 
     if args.fplane is not None:
         args.probes = args.fplane
-
-    args.ifuslot = "{:03d}".format(args.ifuslot)
-
-    if args.limited_probe_annulus:
-        args.config.set('General', 'dpatrol_min', '0.31')
     return args
 
 
@@ -406,18 +327,6 @@ def cl_to_config(args):
                 args.config.set(p, o, value)
 
     return args
-
-
-def get_ifuslot_list(args):
-    """Get the ifu centers and ids of the VIRUS+LRS IFUs for the adjusted
-    fplane file.
-    """
-    fplane_adj_file = args.config.get("General", "fplane_file")
-    fplane = shuffle.fplane_parser.FPlane(fplane_adj_file)
-    ifu_centers = numpy.array([[ifu.x, ifu.y] for ifu in fplane.ifus])
-    ifu_centers = ifu_centers / 3600.
-    ifu_ids = numpy.array([[ifu.ifuslot] for ifu in fplane.ifus])
-    return ifu_centers, ifu_ids
 
 
 def check_fplane_file(args):
@@ -504,31 +413,6 @@ def set_xpa_method(config):
     os.environ['XPA_METHOD'] = config.get('ds9', 'xpa_method')
 
 
-def ifu_index(ifu_ids, ifuslot):
-    '''Return the index of ifuslot in the list of ifu_ids.
-
-    Parameters
-    ----------
-    ifu_ids : nd-array
-        array containing the list of ifuslots
-    ifuslot : string
-        IFUSLOT to find
-
-    Returns
-    -------
-    ifu_ind : nd-array
-        array of one element containing the index of ifuslot
-    '''
-    ifu_ind = numpy.where(ifu_ids == ifuslot)[0]
-
-    if not list(ifu_ind):
-        msg = 'The required IFUSLOT "{id_}" is not in the fplane file.\n'
-        msg += 'Check the fplane file for a list of available IFUSLOTS'
-        raise IFUException(msg.format(id_=ifuslot))
-
-    return ifu_ind
-
-
 def update_coords_for_proper_motion(ra, dec, epoch, log, args):
     current_epoch = Time(datetime.datetime.now()).decimalyear
     if (args.pmRA is not None) and (args.pmDEC is not None):
@@ -592,50 +476,12 @@ def main():
     dec = args.dec
     ra, dec = update_coords_for_proper_motion(ra, dec, args.epoch, log, args)
     radius = args.radius
-    track = args.track
-    obstime = 0
-    ill = 0
-    trans = 0
-    seeing = 0
-    ifu_centers, ifu_ids = get_ifuslot_list(args)
-    ifu_ind = ifu_index(ifu_ids, args.ifuslot)
-    dec_center = dec*1.
-    for i in numpy.arange(4):
-        pas = parang.parang(dec_center, az_input=args.az, verbose=False)
-        if pas[0] == 0:
-            log.error("No track is available for DEC=%f.", dec)
-            sys.exit(0)
-        if pas[0] == 1:
-            log.warning("Warning: Only one track is available for DEC= %f, two"
-                        " tracks are identical.", dec)
-        pa = pas[int(track) + 1] + args.config.getfloat('offsets', 'fplane')
-        tan_plane = TP(ra, dec, pa, 1., 1.)
-        ra_center, dec_center = tan_plane.xy2raDec(-3600. *
-                                                   (ifu_centers[ifu_ind, 0][0])
-                                                   - args.x_offset,
-                                                   -3600. *
-                                                   (ifu_centers[ifu_ind, 1][0])
-                                                   - args.y_offset)
-        test = TP(ra_center, dec_center, pa, 1., 1.)
-        r, d = test.xy2raDec(+3600. * (ifu_centers[ifu_ind, 0][0])
-                             + args.x_offset,
-                             +3600. * (ifu_centers[ifu_ind, 1][0])
-                             + args.y_offset)
-        ra_center += ra - r
-        dec_center += dec - d
-    ra_center = numpy.max([ra_center, 0.])
-    if track == 2:
-        # create the data array
-        data = numpy.array([[1, ra_center, dec_center, obstime, ill, trans,
-                             seeing, 0],
-                            [2, ra_center, dec_center, obstime, ill, trans,
-                             seeing, 1]])
-    else:
-        # create the data array
-        data = numpy.array([1, ra_center, dec_center, obstime, ill, trans,
-                            seeing, track])
-        # reshape to 2-d array (1,data.size)
-        data = data.reshape(1, data.size)
+    pa = args.pa
+    obstime = args.obstime
+    # create the data array
+    data = numpy.array([1, ra, dec, pa, obstime, 1, 1, 1, None])
+    # reshape to 2-d array (1,data.size)
+    data = data.reshape(1, data.size)
     shuffle.do(args, data, radius=radius, start=1, orig_loc=[ra, dec],
                targetID=args.target)
 

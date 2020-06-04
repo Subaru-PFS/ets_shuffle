@@ -166,9 +166,6 @@ Functions for visualization. It downloads the SDSS DR9 image and overplots the s
 If the coordinate is outside SDSS coverage, DSS image is then used.
 It requires "matplotlib" library.
 
-# shuffle/parang.py
-Function for calculating the parallactic angle.
-
 # shuffle/handle_local_catalogue.py
 Handles reading in local catalogues of stars (instead of online databases)
 

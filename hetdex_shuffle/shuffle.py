@@ -11,7 +11,7 @@ import numpy
 
 import pyhetdex.het.fplane as fplane_parser
 
-from . import parang, visualize
+from . import visualize
 from .handle_local_catalogue import LocalCatalogue
 from . import findStars
 from distutils.dir_util import mkpath
@@ -530,18 +530,9 @@ def do(args, data, radius=None, start=1, stop=numpy.Inf, orig_loc=None,
                 traj = 'WEST'
                 tr = 'W'
 
-            pas = parang.parang(dec, az_input=args.az, verbose=False)
-            if pas[0] == 0:
-                log.error("No track is available for DEC=%f.", dec)
-                sys.exit(0)
-            if pas[0] == 1:
-                log.warning("Warning: Only one track is available for DEC= %f,"
-                            " two tracks are identical.", dec)
-            pa = pas[int(track) + 1]
-            az = pas[int(track) + 3]
+            pa = shot[??]
 
-            log.info("RA, DEC, PA, AZ, track = %s, %s, %s, %s, %s",
-                     ra, dec, pa, az, track)
+            log.info("RA, DEC, PA = %s, %s, %s", ra, dec, pa)
 
             # get sources from sdss or a local file
             if localcat_obj:
