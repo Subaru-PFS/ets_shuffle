@@ -16,13 +16,7 @@ ACAM image for the Telescope operator.
 
 @author: gregz
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-try:  # python 3
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
+import builtins
 
 import argparse as ap
 import inspect
@@ -39,7 +33,7 @@ import astropy.units as u
 from astropy.time import Time
 
 import numpy
-from six.moves import configparser
+import configparser
 
 from . import shuffle
 from . import parang

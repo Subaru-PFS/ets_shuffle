@@ -8,7 +8,7 @@ except ImportError:
 from setuptools import setup, find_packages
 
 install_requires = ['numpy', 'scipy', 'astropy', 'astroquery', 'matplotlib',
-                    'pyds9', 'pyhetdex', 'six']
+                    'pyds9', 'pyhetdex']
 
 extras_require = {'oracle': ['cx_Oracle', ]}
 
@@ -16,8 +16,6 @@ entry_points = {'console_scripts': ['do_shuffle = '
                                     'hetdex_shuffle.do_shuffle_target:main',
                                     'shuffle_config = '
                                     'hetdex_shuffle.copy_config:main',
-                                    'shuffle_distances ='
-                                    'hetdex_shuffle.obj_dist_ifu_vis:main',
                                     ]}
 
 setup(

@@ -6,7 +6,6 @@ astroquery
 matplotlib
 pyds9 --extra-index-url https://gate.mpe.mpg.de/pypi
 pyhetdex --extra-index-url https://gate.mpe.mpg.de/pypi
-six
 
 # optional requirements for shuffle. Uncomment the following lines to install
 # them

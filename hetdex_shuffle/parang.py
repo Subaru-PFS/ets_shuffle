@@ -9,9 +9,6 @@ http://puck.as.utexas.edu/HET/references).
          calculations are taken from POINT's newtraj.c.
 '''
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import numpy
 
 # Begin HET constants from POINT's HET.h, dated 09APR12

@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import os
 import math
@@ -20,8 +17,6 @@ from matplotlib.patches import (RegularPolygon, Circle, Rectangle, FancyArrow,
 from matplotlib.lines import Line2D
 from matplotlib.collections import PatchCollection
 import numpy
-import six
-from six.moves import configparser
 import re
 from distutils.dir_util import mkpath
 from pyhetdex.coordinates.tangent_projection import TangentPlane as TP
@@ -68,10 +63,6 @@ class DS9region(object):
         s = ("circle(%0.2f,%0.2f,%0.2f)" % (x, y, radius))
         f.write(s+"\n")
         f.flush()
-
-
-if six.PY2:
-    input = raw_input
 
 
 def deg2pix(degree, scale=1.698):
@@ -417,31 +408,6 @@ def retrieve_image_SkyView(ra, dec, size, yflip, scale):
         return retrieve_image_PS1(ra, dec, size, yflip, scale)
 
     return imarray, CD, '', 'DSS2'
-
-
-def retrieve_image_DSS(ra, dec, size, yflip):
-    """Load image from dss server(fits) and return the image array, the url,
-    and the CD matrix (there is rotation in DSS images).
-    CD matrix transforms the pixel position(x,y) to world coordinate(ra,dec).
-    """
-    url_dss = 'http://archive.eso.org/dss/dss/image'
-    # request_dss = urlencode({'ra':ra, 'dec':dec, 'x':size*60,
-    # 'y':size*60, 'mime-type':'download-gif'})
-    request_dss = urlencode({'ra': ra, 'dec': dec, 'x': size*60,
-                             'y': size*60,
-                             'mime-type': 'download-fits'})
-    # url = "http://archive.eso.org/dss/dss/image?"+request_dss
-    # imfile = urlopen(url_dss, request_dss.encode())
-    # imarray = plt.imread(StringIO(imfile.read()), format='gif')
-    # print(url_dss+'?'+request_dss_fits)
-    hdulist = fits.open(url_dss+'?'+request_dss)
-    hdu = hdulist[0].header
-    imarray = hdulist[0].data
-    if yflip:
-            imarray = imarray[::-1, :]
-    CD = numpy.matrix([[hdu['CD1_1'], hdu['CD1_2']], [hdu['CD2_1'],
-                       hdu['CD2_2']]])
-    return imarray, CD, url_dss+'?'+request_dss, 'DSS'
 
 
 def plotFocalPlane(dra, ddec, pa, scale, ifu_centers, ifu_ids, dec, im_size,

@@ -76,7 +76,6 @@ This command should be rerun if the setup.py file changes.
     pyds9       # interaction with ds9
     pyhetdex    # parse the fplane file
     astroquery  # Query Skyview
-    six         # python 2/3 compatibility
 
 If you want to be able to connect also with the curewise database, you need also
 the following packages
@@ -175,9 +174,6 @@ Handles reading in local catalogues of stars (instead of online databases)
 
 # shuffle/do_shuffle_target.py
 entry point for the do_shuffle executable
-
-# shuffle/obj_dist_ifu_vis.py
-entry point for the shuffle_distances executable
 
 # shuffle/copy_config.py
 entry point for the shuffle_config executable. The list of files to copy is

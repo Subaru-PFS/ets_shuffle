@@ -1,16 +1,12 @@
 '''Entry point to copy the configuration files in the directory from where is
 run'''
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import argparse as ap
 import io
 import os
 import textwrap as tw
 
 import pkg_resources
-import six
 
 from . import __full_version__
 
@@ -71,15 +67,6 @@ def parse(argv=None):
     return args
 
 
-def _str_to_unicode(str_):
-    '''In python 2 convert the input string to unicode, otherwise returns the
-    input'''
-    if six.PY2 and isinstance(str_, six.string_types):
-        return unicode(str_)
-    else:
-        return str_
-
-
 def copy(args):
     non_written_files, written_files = [], []
     for cf in COPY_FILES:
@@ -107,7 +94,7 @@ def copy(args):
         ifile = pkg_resources.resource_string(__name__,
                                               os.path.join('configs', cf))
         with io.open(ofile, 'w', newline=None) as of:
-            of.write(_str_to_unicode(ifile))
+            of.write(ifile.decode('utf-8'))
         written_files.append(cf)
 
     if written_files:
