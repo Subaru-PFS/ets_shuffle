@@ -308,12 +308,10 @@ def retrieve_image(ra, dec, size, res, logger, options=None):
 
 
     scale = size*3600./res
-    return retrieve_image_SkyView(ra, dec, size, scale, logger)
     if SDSS_coverage(ra, dec, logger):
         return retrieve_image_SDSS(ra, dec, size, options, scale, logger)
     else:
         try:
-            return retrieve_image_PS1(ra, dec, size, scale, logger)
             return retrieve_image_SkyView(ra, dec, size, scale, logger)
         except Exception:
             return retrieve_image_PANSTARRS(ra, dec, size, scale, logger)
