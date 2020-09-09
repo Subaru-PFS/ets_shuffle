@@ -90,6 +90,8 @@ def main():
     pa_deg = 0.
     # maximum magnitude for guide stars
     guidestar_mag_max = 19
+    # maximum magnitude for close neighours of guide stars
+    guidestar_neighbor_mag_max = 21
     # minimum distance (in degrees) between guide star candidates
     guidestar_minsep_deg = 1./3600
 
@@ -104,7 +106,7 @@ def main():
     # Find guide star candidates
 
     # Query GAIA2 for a circular region containing all guide cam FOVs
-    # Obtain all targets with g_mean_mag<=guidestar_mag_max that have
+    # Obtain all targets with g_mean_mag<=guidestar_neighbor_mag_max that have
     # proper motion information
     conn, table, coldict = query_utils.openGAIA2connection()
     racol, deccol = coldict["ra"], coldict["dec"]
@@ -114,7 +116,8 @@ def main():
         query_utils.build_circle_query(
             raTel_deg, decTel_deg, fp_rad_deg*1.2, coldict),
         query_utils.build_pm_query(coldict),
-        query_utils.build_mag_query(guidestar_mag_max, 0, 'phot_g_mean_mag')]
+        query_utils.build_mag_query(guidestar_neighbor_mag_max, 0,
+                                    'phot_g_mean_mag')]
     res = query_utils.run_query(conn, table, req_columns, constraints)
     nfound = res[racol].size
     # adjust for proper motion
@@ -137,10 +140,11 @@ def main():
     # Once the "pfi_sky" transformation direction is available in
     # pfs_utils.coordinates, we can do a direct polygon query for every camera,
     # which should be more efficient.
-    targets = np.zeros((0, 2))
+    targets = {}
     for i in range(agcoord.shape[0]):
         p = mppath.Path(agcoord[i])
-        tmp = p.contains_points(res["xypos"])
+        # find all targets in the slighty enlarged FOV
+        tmp = p.contains_points(res["xypos"], radius=1.)  # 1mm more
         tdict = {}
         for key, val in res.items():
             tdict[key] = val[tmp]
@@ -149,9 +153,23 @@ def main():
                                  guidestar_minsep_deg)
         for key, val in tdict.items():
             tdict[key] = val[np.invert(flags)]
-        targets = np.concatenate((targets, tdict["xypos"]))
+        # eliminate all targets which are not bright enough to be guide stars
+        flags = tdict["phot_g_mean_mag"] < guidestar_mag_max
+        for key, val in tdict.items():
+            tdict[key] = val[flags]
+        # eliminate all targets which are not really in the camera's FOV
+        flags = p.contains_points(tdict["xypos"])  # 1mm more
+        for key, val in tdict.items():
+            tdict[key] = val[flags]
+        # append the results for this camera to the full list
+        for key, val in tdict.items():
+            if key not in targets:
+                targets[key] = val
+            else:
+                targets[key] = np.concatenate((targets[key], val))
 
-    plot_focal_plane(agcoord, res["xypos"], targets)
+    print(targets["phot_g_mean_mag"])
+    plot_focal_plane(agcoord, res["xypos"], targets["xypos"])
 
 
 if __name__ == "__main__":
