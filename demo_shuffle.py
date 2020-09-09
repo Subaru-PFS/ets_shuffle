@@ -53,12 +53,14 @@ def plot_focal_plane(cameras, targets, gstargets):
 # returns a (6,4,2) float array with PFI coordinates of the 4 corners
 # of the 6 guide star cams.
 # This is a placeholder until we know how to obtain the real geometry
+# rough values are taken from
+# https://sumire.pbworks.com/w/file/58576912/agcamerastudy.pdf
 def guidecam_geometry():
     # The AG camera is described by its 4 corners. Let's use a square with
     # 10 mm side length for now, at 25mm distance from the center
     agcoord0 = np.zeros((4, 2))
     dist = 250.
-    sidelength = 10.
+    sidelength = 15.
     agcoord0[0, :] = [-.5*sidelength, -.5*sidelength]
     agcoord0[1, :] = [+.5*sidelength, -.5*sidelength]
     agcoord0[2, :] = [+.5*sidelength, +.5*sidelength]
@@ -87,13 +89,17 @@ def main():
     # focal plane position angle
     pa_deg = 0.
     # maximum magnitude for guide stars
-    guidestar_mag_max = 20
+    guidestar_mag_max = 19
+    # minimum distance (in degrees) between guide star candidates
+    guidestar_minsep_deg = 1./3600
+
+
     # guide star cam geometries
     agcoord = guidecam_geometry()
 
     # internal, technical parameters
     # set focal plane radius
-    fp_rad_deg = 250. * 10.2/3600
+    fp_rad_deg = 260. * 10.2/3600
 
     # Find guide star candidates
 
@@ -139,7 +145,8 @@ def main():
         for key, val in res.items():
             tdict[key] = val[tmp]
         # eliminate close neighbors
-        flags = flag_close_pairs(tdict[racol], tdict[deccol], 0.0000001)
+        flags = flag_close_pairs(tdict[racol], tdict[deccol],
+                                 guidestar_minsep_deg)
         for key, val in tdict.items():
             tdict[key] = val[np.invert(flags)]
         targets = np.concatenate((targets, tdict["xypos"]))
