@@ -16,14 +16,13 @@ def flag_close_pairs(ra, dec, radius):
     xyz[..., 1] = cdec*np.sin(ra)
     xyz[..., 2] = np.sin(dec)
     flags = np.zeros(nval, dtype=np.bool)
+
     for i in range(ra.shape[0]):
-        distsq = ((xyz[i, 0]-xyz[i+1:, 0])**2
-                  + (xyz[i, 1]-xyz[i+1:, 1])**2
-                  + (xyz[i, 2]-xyz[i+1:, 2])**2)
+        distsq = np.sum((xyz[i]-xyz[i+1:])**2, axis=-1)
         tflags = distsq < rsq
         if np.any(tflags):
             flags[i] = True
-        flags[i+1:] = flags[i+1:] | tflags
+        flags[i+1:] = np.logical_or(flags[i+1:], tflags)
     return flags
 
 
@@ -119,7 +118,6 @@ def main():
         query_utils.build_mag_query(guidestar_neighbor_mag_max, 0,
                                     'phot_g_mean_mag')]
     res = query_utils.run_query(conn, table, req_columns, constraints)
-    nfound = res[racol].size
     # adjust for proper motion
     obs_year = float(obs_time[0:4])
     res[racol], res[deccol] = \
@@ -141,6 +139,7 @@ def main():
     # pfs_utils.coordinates, we can do a direct polygon query for every camera,
     # which should be more efficient.
     targets = {}
+    tgtcam = []
     for i in range(agcoord.shape[0]):
         p = mppath.Path(agcoord[i])
         # find all targets in the slighty enlarged FOV
@@ -162,13 +161,16 @@ def main():
         for key, val in tdict.items():
             tdict[key] = val[flags]
         # append the results for this camera to the full list
+        tgtcam.append(tdict)
         for key, val in tdict.items():
             if key not in targets:
                 targets[key] = val
             else:
                 targets[key] = np.concatenate((targets[key], val))
 
-    print(targets["phot_g_mean_mag"])
+    for i, d in enumerate(tgtcam):
+        print("AG camera #{}".format(i))
+        print(d[coldict["id"]])
     plot_focal_plane(agcoord, res["xypos"], targets["xypos"])
 
 
