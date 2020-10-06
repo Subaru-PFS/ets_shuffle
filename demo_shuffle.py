@@ -1,5 +1,5 @@
 import numpy as np
-from coordinates.CoordTransp import CoordinateTransform as ctrans
+from pfs.utils.coordinates.CoordTransp import CoordinateTransform as ctrans
 from ets_shuffle import query_utils
 import matplotlib.path as mppath
 
