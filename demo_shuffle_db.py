@@ -6,6 +6,8 @@ from ets_shuffle.convenience import (flag_close_pairs,
                                      plot_focal_plane,
                                      guidecam_geometry)
 import matplotlib.path as mppath
+import pandas as pd
+import datetime
 
 
 def get_db():
@@ -124,7 +126,27 @@ def main():
     for i, d in enumerate(tgtcam):
         print("AG camera #{}".format(i))
         print(d[coldict["id"]])
-    plot_focal_plane(agcoord, res["xypos"], targets["xypos"])
+#    plot_focal_plane(agcoord, res["xypos"], targets["xypos"])
+    # Try to write the results to the database
+    now = datetime.datetime.now()
+    df = pd.DataFrame({'guide_star_id': targets[coldict['id']],
+# We can't write the catalog ID to the cat_id, because 'int' i too small
+#                       'cat_id': targets[coldict['id']],
+                       'ra': targets[racol],
+                       'decl': targets[deccol],
+                       'obj_type_id': 45,
+                       'created_at': now,
+                       'updated_at': now})
+    print(df)
+    from sqlalchemy.sql import text
+    db.engine.execute(text("DELETE FROM guide_stars;"))
+    db.insert('guide_stars', df)
+    db.close()
+
+    # check whether the entries are actually there
+    db = get_db()
+    df = db.fetch_all('guide_stars')
+    print(df)
 
 
 if __name__ == "__main__":
