@@ -16,7 +16,7 @@ def get_db():
     port='5432'
     dbname='opdb'
     username='pfs'
-    passwd='2394'
+    passwd='<redacted>'
 
     db = opdb.OpDB(hostname, port, dbname, username, passwd)
     db.connect()
