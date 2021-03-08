@@ -49,12 +49,12 @@ def plot_focal_plane(cameras, targets, gstargets):
 # returns a (6,4,2) float array with PFI coordinates of the 4 corners
 # of the 6 guide star cams.
 # This is a placeholder until we know how to obtain the real geometry
+# data taken from email by Yuki Moritani, Apr 6 2020
 def guidecam_geometry():
-    # The AG camera is described by its 4 corners. Let's use a square with
-    # 10 mm side length for now, at 25mm distance from the center
     agcoord0 = np.zeros((4, 2))
     dist = 241.292  # mm
     sidelength = 13.312  # mm
+    # not yet used : npix = 1024  # pixels along each direction
     agcoord0[0, :] = [-.5*sidelength, -.5*sidelength]
     agcoord0[1, :] = [+.5*sidelength, -.5*sidelength]
     agcoord0[2, :] = [+.5*sidelength, +.5*sidelength]
