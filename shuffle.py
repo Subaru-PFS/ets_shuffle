@@ -2,7 +2,9 @@ import numpy as np
 import argparse
 from pfs.utils.coordinates.CoordTransp import CoordinateTransform as ctrans
 import pfs.datamodel
+import pfs.datamodel.guideStars
 from ets_shuffle import query_utils
+from ets_shuffle.skyimage import retrieve_image
 from ets_shuffle.convenience import (flag_close_pairs,
                                      update_coords_for_proper_motion,
                                      plot_focal_plane,
@@ -39,6 +41,12 @@ def main():
 
     # guide star cam geometries
     agcoord = guidecam_geometry()
+# transform AG coords to sky for finder chart
+#     agcoord_sky = ctrans(xyin=agcoord.reshape((-1,2)).T,
+#                  za=0., mode="pfi_sky", inr=0., pa=pa_deg,
+#                  cent=np.array([raTel_deg, decTel_deg]),
+#                  time=obs_time)[0:2].T.reshape(agcoord.shape)
+#     print(agcoord_sky)
 
     # internal, technical parameters
     # set focal plane radius
@@ -105,6 +113,8 @@ def main():
         flags = p.contains_points(tdict["xypos"])  # 1mm more
         for key, val in tdict.items():
             tdict[key] = val[flags]
+        # add AG camera ID
+        tdict["agid"] = [i]*len(tdict[coldict["id"]])
         # append the results for this camera to the full list
         tgtcam.append(tdict)
         for key, val in tdict.items():
@@ -113,10 +123,13 @@ def main():
             else:
                 targets[key] = np.concatenate((targets[key], val))
 
-    for i, d in enumerate(tgtcam):
-        print("AG camera #{}".format(i))
-        print(d[coldict["id"]])
-    plot_focal_plane(agcoord, res["xypos"], targets["xypos"])
+#    for i, d in enumerate(tgtcam):
+#        print("AG camera #{}".format(i))
+#        print(d[coldict["id"]])
+
+# fetch a sky image of the observed region
+#    img = retrieve_image(raTel_deg, decTel_deg,fp_rad_deg*2,1000)
+#    plot_focal_plane(agcoord, res["xypos"], targets["xypos"])
 
     # Write the results to a new pfsDesign file. Data fields are according to
     # DAMD-101.
@@ -130,7 +143,26 @@ def main():
     #   AG camera geometry
     output_design = input_design
     output_design.pfsDesignId = args.design_out
+
+    ntgt = len(targets[coldict["id"]])
+    guidestars = pfs.datamodel.guideStars.GuideStars(targets[coldict["id"]],
+                                          targets[coldict["ra"]],
+                                          targets[coldict["dec"]],
+                                          targets[coldict["pmra"]],
+                                          targets[coldict["pmdec"]],
+                                          np.array([0.]*ntgt),  # parallax
+                                          targets["phot_g_mean_mag"],
+                                          np.array(["??"]*ntgt), # passband
+                                          np.array([0.]*ntgt), # color
+                                          targets["agid"], # AG camera ID
+                                          np.array([0.]*ntgt), # AG x pixel coordinate
+                                          np.array([0.]*ntgt), # AG y pixel coordinate
+                                          obs_time,
+                                          -42.,  # telescope elevation, don't know how to obtain,
+                                          0  # numerical ID assigned to the GAIA catalogue
+                                          )
 #    [...]
+    output_design.guideStars = guidestars
     output_design.write(dirName=args.design_out_dir)
 
 
