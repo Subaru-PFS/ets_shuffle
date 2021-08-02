@@ -51,21 +51,11 @@ def plot_focal_plane(cameras, targets, gstargets):
 # This is a placeholder until we know how to obtain the real geometry
 # data taken from email by Yuki Moritani, Apr 6 2020
 def guidecam_geometry():
-    agcoord0 = np.zeros((4, 2))
-    dist = 241.292  # mm
-    sidelength = 13.312  # mm
-    # not yet used : npix = 1024  # pixels along each direction
-    agcoord0[0, :] = [-.5*sidelength, -.5*sidelength]
-    agcoord0[1, :] = [+.5*sidelength, -.5*sidelength]
-    agcoord0[2, :] = [+.5*sidelength, +.5*sidelength]
-    agcoord0[3, :] = [-.5*sidelength, +.5*sidelength]
-    agcoord0[:, 0] += dist
-    # get the remaining cameras via 60-degree rotations
+    import pfs.utils.coordinates.CoordTransp as ctrans
     agcoord = np.zeros((6, 4, 2))
     for i in range(0, 6):
-        ang = (30. + 60.*i)*np.pi/180.
-        ca, sa = np.cos(ang), np.sin(ang)
-        for j in range(4):
-            x, y = agcoord0[j, :]
-            agcoord[i, j, :] = ca*x - sa*y, ca*y + sa*x
+        agcoord[i, 0, :] = ctrans.ag_pixel_to_pfimm(i, 0.5, 0.5)
+        agcoord[i, 1, :] = ctrans.ag_pixel_to_pfimm(i, 1023.5, 0.5)
+        agcoord[i, 2, :] = ctrans.ag_pixel_to_pfimm(i, 1023.5, 1023.5)
+        agcoord[i, 3, :] = ctrans.ag_pixel_to_pfimm(i, 0.5, 1023.5)
     return agcoord

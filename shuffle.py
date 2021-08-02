@@ -1,6 +1,7 @@
 import numpy as np
 import argparse
 from pfs.utils.coordinates.CoordTransp import CoordinateTransform as ctrans
+from pfs.utils.coordinates.CoordTransp import ag_pfimm_to_pixel
 import pfs.datamodel
 import pfs.datamodel.guideStars
 from ets_shuffle import query_utils
@@ -115,6 +116,13 @@ def main():
             tdict[key] = val[flags]
         # add AG camera ID
         tdict["agid"] = [i]*len(tdict[coldict["id"]])
+        # compute and add pixel coordinates
+        tmp = []
+        print(tdict["xypos"])
+        for pos in tdict["xypos"]:
+            tmp.append(ag_pfimm_to_pixel(i, pos[0], pos[1]))
+        tdict["agpix_x"] = np.array([x[0] for x in tmp])
+        tdict["agpix_y"] = np.array([x[1] for x in tmp])
         # append the results for this camera to the full list
         tgtcam.append(tdict)
         for key, val in tdict.items():
@@ -155,8 +163,8 @@ def main():
                                           np.array(["??"]*ntgt), # passband
                                           np.array([0.]*ntgt), # color
                                           targets["agid"], # AG camera ID
-                                          np.array([0.]*ntgt), # AG x pixel coordinate
-                                          np.array([0.]*ntgt), # AG y pixel coordinate
+                                          targets["agpix_x"], # AG x pixel coordinate
+                                          targets["agpix_y"], # AG y pixel coordinate
                                           obs_time,
                                           -42.,  # telescope elevation, don't know how to obtain,
                                           0  # numerical ID assigned to the GAIA catalogue
