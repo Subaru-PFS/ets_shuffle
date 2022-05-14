@@ -45,7 +45,7 @@ def main():
 # transform AG coords to sky for finder chart
 #     agcoord_sky = ctrans(xyin=agcoord.reshape((-1,2)).T,
 #                  za=0., mode="pfi_sky", inr=0., pa=pa_deg,
-#                  cent=np.array([raTel_deg, decTel_deg]),
+#                  cent=np.array([raTel_deg, decTel_deg]).reshape((2,1)),
 #                  time=obs_time)[0:2].T.reshape(agcoord.shape)
 #     print(agcoord_sky)
 
@@ -83,7 +83,7 @@ def main():
     tmp = np.array([res[racol], res[deccol]])
     tmp = ctrans(xyin=tmp,
                  za=0., mode="sky_pfi", inr=0., pa=pa_deg,
-                 cent=np.array([raTel_deg, decTel_deg]),
+                 cent=np.array([raTel_deg, decTel_deg]).reshape((2,1)),
                  time=obs_time)
     res["xypos"] = np.array([tmp[0, :], tmp[1, :]]).T
 

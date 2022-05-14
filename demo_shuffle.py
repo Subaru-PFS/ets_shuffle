@@ -60,7 +60,7 @@ def main():
     tmp = np.array([res[racol], res[deccol]])
     tmp = ctrans(xyin=tmp,
                  za=0., mode="sky_pfi", inr=0., pa=pa_deg,
-                 cent=np.array([raTel_deg, decTel_deg]),
+                 cent=np.array([raTel_deg, decTel_deg]).reshape((2,1)),
                  time=obs_time)
     res["xypos"] = np.array([tmp[0, :], tmp[1, :]]).T
 
