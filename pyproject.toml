@@ -1,0 +1,42 @@
+[project]
+name = "ets-shuffle"
+requires-python = ">=3.12"
+dependencies = [
+  "astroquery",
+  "matplotlib",
+  "numpy",
+  "pfs-utils @ git+https://github.com/Subaru-PFS/pfs_utils.git",
+]
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+ignore = [
+  "F401",  # module imported but unused
+  "F841",  # local variable is assigned to but never used
+  "E501",  # line too long, handled by black
+  "B008",  # do not perform function calls in argument defaults
+  "C901",  # too complex
+  "N802",  # function name should be lowercase
+  "N803",  # argument name should be lowercase
+  "N806",  # variable in function should be lowercase
+  "N815",  # variable in class should be lowercase
+  "N816",  # attribute in class should be lowercase
+  "EM101",  # use 'isinstance()' instead of comparing types directly
+  "TRY003",  # unnecessary except block
+]
+
+[tool.setuptools_scm]
+version_file = "ets_shuffle/_version.py"
+fallback_version = "0.0.0+unknown"
