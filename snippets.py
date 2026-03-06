@@ -1,9 +1,11 @@
 # Various potentially useful, unsorted information related to ets_shuffle
 
+
 # Some handy functions for exploring a DB server
 def getColumns(catalog):
     from astroquery.utils.tap.core import TapPlus
-    tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap") 
+
+    tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap")
     query_string = """SELECT Top 1 * FROM {}""".format(catalog)
     job = tap.launch_job_async(query_string, dump_to_file=False)
     res = job.get_results()
@@ -12,6 +14,7 @@ def getColumns(catalog):
 
 def VizierTables():
     from astroquery.utils.tap.core import TapPlus
+
     tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap")
     tables = tap.load_tables(only_names=True)
     interestingNames = ("sdss", "2mass", "gaia", "tess", "usno")
@@ -21,7 +24,8 @@ def VizierTables():
             if iname in name:
                 print(table.get_qualified_name())
 
-#snippets for coordinate conversion
+
+# snippets for coordinate conversion
 # import astropy.units as u
 # from astropy.coordinates import SkyCoord
 #     crd = SkyCoord(ra*u.deg, dec*u.deg, frame="fk5")
