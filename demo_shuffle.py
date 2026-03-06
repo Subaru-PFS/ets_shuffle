@@ -1,37 +1,40 @@
+import matplotlib.path as mppath
 import numpy as np
 from pfs.utils.coordinates.CoordTransp import CoordinateTransform as ctrans
+
 from ets_shuffle import query_utils
-from ets_shuffle.convenience import (flag_close_pairs,
-                                     update_coords_for_proper_motion,
-                                     plot_focal_plane,
-                                     guidecam_geometry)
-import matplotlib.path as mppath
+from ets_shuffle.convenience import (
+    flag_close_pairs,
+    guidecam_geometry,
+    plot_focal_plane,
+    update_coords_for_proper_motion,
+)
 
 # radius of the focal plane: roughly 220mm
 # 1mm corresponds roughly to 10.2 arcseconds
+
 
 def main():
     # Section with externally provided parameters
 
     obs_time = "2020-01-01 15:00:00"
     # telescope pointing
-    raTel_deg, decTel_deg = 34., -3.
+    raTel_deg, decTel_deg = 34.0, -3.0
     # focal plane position angle
-    pa_deg = 0.
+    pa_deg = 0.0
     # maximum magnitude for guide stars
     guidestar_mag_max = 19
     # maximum magnitude for close neighours of guide stars
     guidestar_neighbor_mag_max = 21
     # minimum distance (in degrees) between guide star candidates
-    guidestar_minsep_deg = 1./3600
-
+    guidestar_minsep_deg = 1.0 / 3600
 
     # guide star cam geometries
     agcoord = guidecam_geometry()
 
     # internal, technical parameters
     # set focal plane radius
-    fp_rad_deg = 260. * 10.2/3600
+    fp_rad_deg = 260.0 * 10.2 / 3600
 
     # Find guide star candidates
 
@@ -40,28 +43,44 @@ def main():
     # proper motion information
     conn, table, coldict = query_utils.openGAIA2connection()
     racol, deccol = coldict["ra"], coldict["dec"]
-    req_columns = [coldict["id"], racol, deccol, coldict["pmra"],
-                   coldict["pmdec"], 'phot_g_mean_mag']
+    req_columns = [
+        coldict["id"],
+        racol,
+        deccol,
+        coldict["pmra"],
+        coldict["pmdec"],
+        "phot_g_mean_mag",
+    ]
     constraints = [
         query_utils.build_circle_query(
-            raTel_deg, decTel_deg, fp_rad_deg*1.2, coldict),
+            raTel_deg, decTel_deg, fp_rad_deg * 1.2, coldict
+        ),
         query_utils.build_pm_query(coldict),
-        query_utils.build_mag_query(guidestar_neighbor_mag_max, 0,
-                                    'phot_g_mean_mag')]
+        query_utils.build_mag_query(guidestar_neighbor_mag_max, 0, "phot_g_mean_mag"),
+    ]
     res = query_utils.run_query(conn, table, req_columns, constraints)
     # adjust for proper motion
     obs_year = float(obs_time[0:4])
-    res[racol], res[deccol] = \
-        update_coords_for_proper_motion(res[racol], res[deccol],
-                                        res[coldict["pmra"]],
-                                        res[coldict["pmdec"]], 2000., obs_year)
+    res[racol], res[deccol] = update_coords_for_proper_motion(
+        res[racol],
+        res[deccol],
+        res[coldict["pmra"]],
+        res[coldict["pmdec"]],
+        2000.0,
+        obs_year,
+    )
 
     # compute PFI coordinates
     tmp = np.array([res[racol], res[deccol]])
-    tmp = ctrans(xyin=tmp,
-                 za=0., mode="sky_pfi", inr=0., pa=pa_deg,
-                 cent=np.array([raTel_deg, decTel_deg]).reshape((2,1)),
-                 time=obs_time)
+    tmp = ctrans(
+        xyin=tmp,
+        za=0.0,
+        mode="sky_pfi",
+        inr=0.0,
+        pa=pa_deg,
+        cent=np.array([raTel_deg, decTel_deg]).reshape((2, 1)),
+        time=obs_time,
+    )
     res["xypos"] = np.array([tmp[0, :], tmp[1, :]]).T
 
     # determine the subset of sources falling within the guide cam FOVs
@@ -74,13 +93,12 @@ def main():
     for i in range(agcoord.shape[0]):
         p = mppath.Path(agcoord[i])
         # find all targets in the slighty enlarged FOV
-        tmp = p.contains_points(res["xypos"], radius=1.)  # 1mm more
+        tmp = p.contains_points(res["xypos"], radius=1.0)  # 1mm more
         tdict = {}
         for key, val in res.items():
             tdict[key] = val[tmp]
         # eliminate close neighbors
-        flags = flag_close_pairs(tdict[racol], tdict[deccol],
-                                 guidestar_minsep_deg)
+        flags = flag_close_pairs(tdict[racol], tdict[deccol], guidestar_minsep_deg)
         for key, val in tdict.items():
             tdict[key] = val[np.invert(flags)]
         # eliminate all targets which are not bright enough to be guide stars

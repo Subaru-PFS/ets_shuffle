@@ -5,14 +5,16 @@ coldicts = {
         "dec": "dec",
         "pmra": "pmra",
         "pmdec": "pmdec",
-        "id": "source_id"},
+        "id": "source_id",
+    },
     "SDSSdr12": {
         "ra": "RA_ICRS",
         "dec": "DE_ICRS",
         "pmra": "pmRA",
         "pmdec": "pmDE",
-        "id": "objID"}
-    }
+        "id": "objID",
+    },
+}
 
 
 def build_circle_query(ra, dec, radius, coldict):
@@ -30,8 +32,9 @@ def build_circle_query(ra, dec, radius, coldict):
     -------
     string : the query substring
     """
-    return """CONTAINS(POINT('ICRS',{},{}),CIRCLE('ICRS',{},{},{}))=1"""\
-        .format(coldict["ra"], coldict["dec"], ra, dec, radius)
+    return """CONTAINS(POINT('ICRS',{},{}),CIRCLE('ICRS',{},{},{}))=1""".format(
+        coldict["ra"], coldict["dec"], ra, dec, radius
+    )
 
 
 def build_polygon_query(coords, coldict):
@@ -49,8 +52,10 @@ def build_polygon_query(coords, coldict):
     string : the query substring
     """
     res = """CONTAINS(POINT('ICRS',{},{}),
-          POLYGON('ICRS',""".format(coldict["ra"], coldict["dec"])
-    for i in range(coords.shape[0]-1):
+          POLYGON('ICRS',""".format(
+        coldict["ra"], coldict["dec"]
+    )
+    for i in range(coords.shape[0] - 1):
         res += str(coords[i, 0]) + "," + str(coords[i, 1]) + ","
     res += str(coords[-1, 0]) + "," + str(coords[-1, 1])
     res += "))=1"
@@ -90,8 +95,9 @@ def build_pm_query(coldict):
     -------
     string : the query substring
     """
-    return """{} is not null and {} is not null"""\
-        .format(coldict["pmra"], coldict["pmdec"])
+    return """{} is not null and {} is not null""".format(
+        coldict["pmra"], coldict["pmdec"]
+    )
 
 
 def openGAIA2connection():
@@ -104,6 +110,7 @@ def openGAIA2connection():
     dict(string, string) : the relevant translation table for column names
     """
     from astroquery.gaia import Gaia
+
     return Gaia, "gaiadr2.gaia_source", coldicts["GAIA2"]
 
 
@@ -117,8 +124,8 @@ def openVizierSDSSdr12connection():
     dict(string, string) : the relevant translation table for column names
     """
     from astroquery.utils.tap.core import TapPlus
-    tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap",
-                  verbose=False)
+
+    tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap", verbose=False)
     return tap, 'vizls."V/147/sdss12"', coldicts["SDSSdr12"]
 
 
@@ -132,8 +139,8 @@ def openVizierGAIA2connection():
     dict(string, string) : the relevant translation table for column names
     """
     from astroquery.utils.tap.core import TapPlus
-    tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap",
-                  verbose=False)
+
+    tap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap", verbose=False)
     return tap, 'vizls."I/345/gaia2"', coldicts["GAIA2"]
 
 
@@ -156,17 +163,17 @@ def run_query(conn, table, req_columns, constraints):
     dict(string, numpy.ndarray) : the retrieved quantities
     """
     import numpy as np
+
     colstring = ""
     for col in req_columns[:-1]:
-        colstring += col+', '
+        colstring += col + ", "
     colstring += req_columns[-1]
     constr = ""
     for constraint in constraints[:-1]:
-        constr += constraint+' AND '
+        constr += constraint + " AND "
     constr += constraints[-1]
-    query_string = ('SELECT ' + colstring + ' FROM ' + table
-                    + ' WHERE ' + constr + ';')
-#    print(query_string)
+    query_string = "SELECT " + colstring + " FROM " + table + " WHERE " + constr + ";"
+    #    print(query_string)
     job = conn.launch_job_async(query_string, dump_to_file=False, verbose=False)
     res = job.get_results()
     res2 = {}
