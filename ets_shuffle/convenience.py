@@ -11,7 +11,7 @@ def flag_close_pairs(ra, dec, radius):
     xyz[..., 0] = cdec * np.cos(ra)
     xyz[..., 1] = cdec * np.sin(ra)
     xyz[..., 2] = np.sin(dec)
-    flags = np.zeros(nval, dtype=np.bool)
+    flags = np.zeros(nval, dtype=bool)
 
     for i in range(ra.shape[0]):
         distsq = np.sum((xyz[i] - xyz[i + 1 :]) ** 2, axis=-1)
